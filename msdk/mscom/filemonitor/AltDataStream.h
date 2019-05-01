@@ -86,3 +86,16 @@ private:
 //	return 0;
 //}
 
+
+//CoInitialize(NULL);
+//CComPtr<IZoneIdentifier> spzi;
+//spzi.CoCreateInstance(CLSID_PersistentZoneIdentifier);
+//DWORD dwZone;
+//if (SUCCEEDED(CComQIPtr<IPersistFile>(spzi)
+//	->Load(L"D:\\ChromeDownload\\Streams.zip", STGM_READ)) &&
+//	SUCCEEDED(spzi->GetId(&dwZone))) {
+//	printf("Zone identifier is %d\n", dwZone);
+//}
+//else {
+//	printf("Couldn't get zone identifier (perhaps there isn't one)\n");
+//}
