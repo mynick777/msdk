@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include <list>
 #include "FileMonitor.h"
+#include "AltDataStream.h"
 
 #define BUFFER_LENGTH 4096/*((sizeof(FILE_NOTIFY_INFORMATION)+MAX_PATH)*2)*/
 CFileMonitor::CFileMonitor(void)
@@ -244,6 +245,23 @@ STDMETHODIMP CFileMonitor::CloseMonitor()
 	return S_OK;
 }
 
+std::wstring exec(const WCHAR* cmd) {
+	WCHAR buffer[128];
+	std::wstring result = L"";
+	FILE* pipe = _wpopen(cmd, L"r");
+	if (!pipe) throw std::runtime_error("popen() failed!");
+	try {
+		while (fgetws(buffer, sizeof buffer, pipe) != NULL) {
+			result += buffer;
+		}
+	}
+	catch (...) {
+		_pclose(pipe);
+		throw;
+	}
+	_pclose(pipe);
+	return result;
+}
 
 HRESULT CFileMonitor::Run()
 {
@@ -252,7 +270,6 @@ HRESULT CFileMonitor::Run()
 
 	while(1)
 	{
-		//等待三秒时间吧，这个时间应该是差不多够用的
 		DWORD dwWait = WaitForMultipleObjects(nEventCount,waitEvents,FALSE,1000);
 		if (dwWait == WAIT_OBJECT_0 + 0) //m_hExit
 		{
@@ -305,40 +322,50 @@ HRESULT CFileMonitor::Run()
 			FILE_NOTIFY_INFORMATION* pNotify=(FILE_NOTIFY_INFORMATION*)lpPoint;
 			for (FILE_NOTIFY_INFORMATION*p = pNotify ;p; p = (FILE_NOTIFY_INFORMATION *)(((LPBYTE)p)+p->NextEntryOffset))
 			{
-				TCHAR strName[MAX_PATH] = {0};;
+
+				TCHAR strName[MAX_PATH] = {0};
 				int nFileNameLen = p->FileNameLength / sizeof(TCHAR);
 				p->FileName[nFileNameLen] = 0;
-			
-				_tcscpy_s(strName,MAX_PATH,strDir.c_str());
+
+				_tcscpy_s(strName,MAX_PATH, strDir.c_str());
 				_tcsncat_s(strName,MAX_PATH,p->FileName,p->FileNameLength/sizeof(WCHAR));
 
+				std::wstring strAction = L"";
+				std::wstring ret = L"";
+				TCHAR strCmd[MAX_PATH] = { 0 };
+				wsprintf(strCmd, L"start powershell.exe Get-content -Path \"%s\" -Stream Zone.Identifier", strName);
+				switch (p->Action)
+				{
+				case FILE_ACTION_ADDED:
+					strAction = L"Add:";
+					GrpMsg(GroupName, MsgLevel_Msg, _T("%s  "), strCmd);
+					ret = exec(strCmd);
+					if (!ret.empty())
+					{
+						GrpMsg(GroupName, MsgLevel_Msg, _T("powershell: %s "), ret.c_str());
+					}
+					break;
+				case FILE_ACTION_REMOVED:
+					strAction = L"Remove:";
+					break;
+				case FILE_ACTION_MODIFIED:
+					strAction = L"Modify:";
+					break;
+				case FILE_ACTION_RENAMED_OLD_NAME:
+					strAction = L"Rename Old Name:";
+					break;
+
+				case FILE_ACTION_RENAMED_NEW_NAME:
+					strAction = L"Rename New Name:";
+					break;
+
+				default:
+					break;
+				}
+
+				
 				if(m_pOnVolumeMonitor)
 				{
-					
-					//Sleep(1000);
-					//文件修改
-					
-					/*
-					if (TRUE)
-					{
-						//_T("$Recycle.Bin")
-						TCHAR strlowName[MAX_PATH] = {0};
-						if(_tcsstr(_tcslwr(_tcscpy(strlowName, strName)), _T("$recycle.bin")) != NULL)
-						{
-							TCHAR szFileName[MAX_PATH] = {0};
-							if (GetRecycleFileDisplayName(strName, szFileName,MAX_PATH))
-							{
-								ZM1_GrpDbgOutput(GroupName,_T("-----删除{%s}"), szFileName);
-								m_pOnVolumeMonitor->OnFileActionChange(FILE_ACTION_REMOVED,szFileName,GetFileAttributes(strName));
-								if (!p->NextEntryOffset)
-								{
-									break;
-								};
-								continue;
-							}
-						}
-					}
-					*/
 					m_pOnVolumeMonitor->OnFileActionChange(p->Action,strName,GetFileAttributes(strName));
 				}
 

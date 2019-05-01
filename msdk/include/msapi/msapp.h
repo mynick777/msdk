@@ -4,7 +4,7 @@
 #include <shlobj.h>
 #include <shlwapi.h>
 
-#include <util/str_encode_embed.h>
+//#include <util/str_encode_embed.h>
 #include <msapi/mswinapi.h>
 #include <userguid/userguid.h>
 

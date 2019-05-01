@@ -39,7 +39,6 @@ public:
 private:
 	UTIL::com_ptr<IMscomRunningObjectTable> m_pRot;
 	UTIL::com_ptr<IFileMonitor>	m_pFileMonitor;
-	UTIL::com_ptr<IMSBase>		m_pDiskMonitor;
 	CConnectionPointHelper m_FileChangeConnectPoint;
 	UseConnectPoint<IDiskChangeConnectPoint> m_useDiskChangePoint;
 };

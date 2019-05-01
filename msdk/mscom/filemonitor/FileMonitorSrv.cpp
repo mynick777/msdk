@@ -11,7 +11,6 @@ CFileMonitorSrv::~CFileMonitorSrv(void)
 
 STDMETHODIMP CFileMonitorSrv::Init(void*)
 {	
-	//Sleep(9000);
 	RFAILED(DllQuickCreateInstance(CLSID_FileMonitor,re_uuidof(IFileMonitor),m_pFileMonitor,NULL));
 	RASSERT(m_pFileMonitor,E_FAIL);
 
@@ -23,9 +22,7 @@ STDMETHODIMP CFileMonitorSrv::Uninit()
 {
 	if(m_pFileMonitor)
 	{
-		m_pFileMonitor->CloseMonitor();
-		//m_pFileMonitor->RemoveMonitor(NULL);
-		
+		m_pFileMonitor->CloseMonitor();		
 		m_pFileMonitor = INULL;
 	}
 
@@ -42,10 +39,6 @@ STDMETHODIMP CFileMonitorSrv::Uninit()
 
 STDMETHODIMP CFileMonitorSrv::Start()
 {
-	UTIL::com_ptr<IMSBase> m_diskMonitor;
-	RFAILED(m_pRot->GetObject(CLSID_DiskMonitor,re_uuidof(IMSBase),(void**)&m_diskMonitor));
-	RASSERT(m_diskMonitor,E_FAIL);
-	RFAILED(m_useDiskChangePoint.Connect(m_diskMonitor,UTIL::com_ptr<IMSBase>(this)));
 	if (m_pFileMonitor)
 	{
 		return m_pFileMonitor->OpenMonitor(NULL,0,this);

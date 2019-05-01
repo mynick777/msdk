@@ -26,7 +26,7 @@
 #include <assert.h>
 #include <mscom/mscominc.h>
 #include <mslog/msdkoutput.h>
-#include <mslog/stdlog_s.h>
+#include <mslog/stdlog.h>
 
 
 //////////////////////////////////////////////////////////////////////////
